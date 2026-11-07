@@ -11,7 +11,7 @@ const safe=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;
 const now=()=>new Date().toISOString();
 const id=()=>typeof crypto!=="undefined"&&crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(36).slice(2,9);
 const day=()=>{const d=new Date();const pad=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
-const formatDate=d=>{if(!d)return"Sans date";try{return new Date(d+"T12:00:00").toLocaleDateString("fr-CA",{year:"numeric",month:"short",day:"numeric"})}catch{return d}};
+const formatDate=d=>{if(!d)return"Sans date";try{return new Date(d+"T12:00:00").toLocaleDateString(window.RNIEL_I18N?.lang==="en"?"en-CA":"fr-CA",{year:"numeric",month:"short",day:"numeric"})}catch{return d}};
 function load(){const empty={talents:[],campaigns:[],tasks:[],opportunities:[],activities:[],settings:{meydenEmail:"",rnielEmail:""}};try{let r=JSON.parse(localStorage.getItem(STORAGE)||"null");if(!r||typeof r!=="object")return empty;for(const k of ["talents","campaigns","tasks","opportunities","activities"])empty[k]=Array.isArray(r[k])?r[k]:[];empty.settings={...empty.settings,...(r.settings||{})};return empty}catch{return empty}}
 function save(){try{localStorage.setItem(STORAGE,JSON.stringify(data));return true}catch{toast("Espace de stockage insuffisant. Exporte une sauvegarde.");return false}}
 function toast(message){$("toast").textContent=message;$("toast").classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>$("toast").classList.remove("show"),4400)}
@@ -31,7 +31,7 @@ function metric(num,label){return '<div class="stat"><div class="num">'+num+'</d
 function renderHome(){
 const active=data.tasks.filter(t=>!t.done).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
 const recent=[...data.opportunities].reverse().slice(0,3);
-return '<section class="hero"><div><div class="eyebrow">TON BUREAU ARTISTIQUE PERSONNEL</div><h2>Découvrir des talents. Créer des liens. Faire avancer les projets.</h2><p>Enregistre tes découvertes, prépare les promotions, transmets des opportunités à MEYDEN et conserve une trace de chaque démarche.</p>'+btn("new-talent","＋ Ajouter un DJ","primary")+' '+btn("new-opportunity","✦ Nouvelle opportunité")+'</div><div class="glyph" aria-hidden="true">♫</div></section>'
+return '<section class="hero"><div><div class="eyebrow">TON BUREAU ARTISTIQUE PERSONNEL</div><h2>Découvrir des talents. Créer des liens. Faire avancer les projets.</h2><p>Enregistre tes découvertes, prépare les promotions, transmets des opportunités à MEYDEN et conserve une trace de chaque démarche.</p>'+btn("new-talent","＋ Ajouter un DJ","primary")+' '+btn("new-opportunity","✦ Nouvelle opportunité")+'</div><div class="hero-profile"><img src="./assets/rniel.jpg" alt="Portrait de R-Niel"><div>R-NIEL × MEYDEN</div></div></section>'
 +'<div class="stats">'+metric(data.talents.length,"Talents répertoriés")+metric(data.talents.filter(x=>["Intéressé","Orientation MEYDEN","En collaboration"].includes(x.status)).length,"Contacts intéressés")+metric(data.campaigns.filter(x=>x.status!=="Terminée").length,"Campagnes en préparation")+metric(data.opportunities.length,"Opportunités consignées")+'</div>'
 +'<div class="grid2"><section class="panel">'+title("Actions rapides","Pour commencer")+'<div class="action-grid">'
 +[['new-talent','♫','Ajouter un talent','Créer une fiche DJ'],['new-task','☑','Planifier un suivi','Ne rien oublier'],['new-campaign','◉','Créer une campagne','Organiser une promotion'],['new-opportunity','✦','Proposer à MEYDEN','Transmettre une idée'],['go-incubation','◆','Incubation DJ','Voir les 3 niveaux'],['go-reports','▥','Mon bilan','Mesurer mes efforts']].map(a=>'<button class="action" data-action="'+a[0]+'"><span class="icon">'+a[1]+'</span><b>'+a[2]+'</b><small>'+a[3]+'</small></button>').join("")+'</div></section>'
@@ -77,8 +77,9 @@ function associated(t,entry){
   if(entry.talentId)return entry.talentId===t.id;
   return normalizeKey(entry.related)===normalizeKey(t.name)||normalizeKey(entry.artistName)===normalizeKey(t.name);
 }
-function opportunitySubject(o){return "MEYDEN | Dossier "+(o.ref||"")+" — "+(o.title||"Nouvelle opportunité")}
+function opportunitySubject(o){return "MEYDEN | "+(window.RNIEL_I18N?.lang==="en"?"File ":"Dossier ")+(o.ref||"")+" — "+(o.title||(window.RNIEL_I18N?.lang==="en"?"New opportunity":"Nouvelle opportunité"))}
 function opportunityText(o){
+if(window.RNIEL_I18N?.lang==="en")return opportunityTextEnglish(o);
  const talent=linkedTalent(o), campaigns=talent?data.campaigns.filter(c=>associated(talent,c)):[], tasks=talent?data.tasks.filter(t=>associated(talent,t)):[],
  activities=talent?(data.activities||[]).filter(a=>a.talentId===talent.id).sort((a,b)=>String(a.date||a.createdAt||"").localeCompare(String(b.date||b.createdAt||""))):[];
  const lines=[
@@ -91,7 +92,7 @@ function opportunityText(o){
  "Référence : "+(o.ref||""),
  "Date de création : "+formatDate((o.createdAt||"").slice(0,10)),
  "Dernière mise à jour : "+formatDate((o.updatedAt||o.createdAt||"").slice(0,10)),
- "Préparé par : R-niel Yousoft",
+ "Préparé par : R-Niel Yousof",
  "",
  "1. OPPORTUNITÉ IDENTIFIÉE",
  "Catégorie : "+(o.type||"Non précisée"),
@@ -128,12 +129,46 @@ function opportunityText(o){
  "Les étapes, partenariats, budgets ou engagements éventuels demeurent sujets à validation.",
  "",
  "Merci,",
- "R-niel Yousoft",
+ "R-Niel Yousof",
  "Promotion et développement artistique",
  "MEYDEN — Mouvement artistique du Québec",
  "Structurer • Créer • Élever");
  return lines.join("\n");
 }
+function opportunityTextEnglish(o){
+ const talent=linkedTalent(o);
+ const campaigns=talent?data.campaigns.filter(c=>associated(talent,c)):[];
+ const tasks=talent?data.tasks.filter(t=>associated(talent,t)):[];
+ const activities=talent?(data.activities||[]).filter(a=>a.talentId===talent.id).sort((a,b)=>String(a.date||a.createdAt||"").localeCompare(String(b.date||b.createdAt||""))):[];
+ const lines=[
+ "Hello Mathieu,","","Here is an artist development opportunity based on the information gathered during my follow-up.",
+ "This report combines the proposal with information recorded in my R-Niel workspace.","",
+ "OPPORTUNITY FILE — MEYDEN","Reference: "+(o.ref||""),
+ "Created: "+formatDate((o.createdAt||"").slice(0,10)),
+ "Updated: "+formatDate((o.updatedAt||o.createdAt||"").slice(0,10)),
+ "Prepared by: R-Niel Yousof","",
+ "1. IDENTIFIED OPPORTUNITY","Category: "+(o.type||"Not specified"),
+ "Project: "+(o.title||"Not specified"),
+ "Artist / organization: "+(o.person||talent?.name||"Not specified"),
+ "Link or contact: "+(o.contact||talent?.link||"Not specified"),
+ "Description: "+(o.description||"Not specified"),
+ "Suggested next step: "+(o.nextStep||"To be determined with MEYDEN")
+ ];
+ if(talent)lines.push("","2. ARTIST PROFILE","Name: "+(talent.name||""),
+ "Music style: "+(talent.style||"Not specified"),"Region: "+(talent.city||"Not specified"),
+ "Discovery platform: "+(talent.platform||"Not specified"),
+ "Profile: "+(talent.link||"Not specified"),"Current stage: "+(talent.status||"Not specified"),
+ "Notes: "+(talent.notes||"None"));
+ if(activities.length){lines.push("","3. CONVERSATIONS AND ACTIVITY HISTORY");for(const a of activities)lines.push("• "+formatDate(a.date||String(a.createdAt||"").slice(0,10))+" — "+(a.type||"Follow-up")+": "+(a.detail||""));}
+ if(campaigns.length){lines.push("","4. RELATED PROMOTION");for(const c of campaigns)lines.push("• "+(c.title||"Campaign")+" | "+(c.platform||"Platform unknown")+" | "+(c.status||"Status unknown")+" | "+formatDate(c.date)+"\n  "+(c.notes||""));}
+ if(tasks.length){lines.push("","5. FOLLOW-UPS AND COMMITMENTS");for(const t of tasks)lines.push("• "+(t.done?"Completed":"Pending")+" — "+(t.title||"Action")+" | "+formatDate(t.due)+"\n  "+(t.notes||""));}
+ lines.push("","6. SUMMARY AND REQUESTED DECISION","I suggest that MEYDEN evaluate this opportunity and determine next steps together.",
+ "Potential projects, partnerships, budgets and commitments remain subject to approval.",
+ "","Thank you,","R-Niel Yousof","Artist promotion and development",
+ "MEYDEN — Mouvement artistique du Québec","Structurer • Créer • Élever");
+ return lines.join("\n");
+}
+
 function draftRecipients(){const c=data.settings||{};return [String(c.meydenEmail||"").trim(),String(c.rnielEmail||"").trim()].filter(Boolean)}
 function draftHref(to,subject,body){
  return "mailto:"+to.map(encodeURIComponent).join(",")+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
@@ -187,7 +222,7 @@ function renderSettings(){
  return '<div class="notice" style="margin-bottom:16px">Le courriel est composé à partir de toutes les informations liées à l’artiste pendant son parcours. Les deux adresses sont préparées en même temps : R-niel vérifie et envoie depuis sa messagerie.</div>'+
  '<div class="grid2"><section class="panel"><h2>Destinataires des rapports</h2><p>À configurer une seule fois sur cet appareil. Ces adresses sont intégrées aux brouillons créés par le programme.</p>'+
  '<form data-form="settings" class="stack"><div class="field"><label for="meyden-email">Mathieu Prud’homme — MEYDEN</label><input id="meyden-email" name="meydenEmail" type="email" class="input" value="'+safe(s.meydenEmail||"")+'" placeholder="adresse@gmail.com" required></div>'+
- '<div class="field"><label for="rniel-email">R-niel Yousoft</label><input id="rniel-email" name="rnielEmail" type="email" class="input" value="'+safe(s.rnielEmail||"")+'" placeholder="adresse@gmail.com" required></div>'+
+ '<div class="field"><label for="rniel-email">R-Niel Yousof</label><input id="rniel-email" name="rnielEmail" type="email" class="input" value="'+safe(s.rnielEmail||"")+'" placeholder="adresse@gmail.com" required></div>'+
  '<button class="btn primary" type="submit">Enregistrer les adresses</button></form></section>'+
  '<section class="panel"><h2>Récupérer les adresses déjà configurées</h2><p>Si tu disposes du code MEYDEN, récupère les deux adresses depuis la configuration protégée du serveur Vercel. Ce code n’active aucun envoi automatique.</p>'+
  '<div class="field"><label for="send-code">Code privé MEYDEN</label><input type="password" id="send-code" class="input" autocomplete="off" placeholder="Code d’accès MEYDEN"></div><div style="margin-top:13px">'+btn("save-code","Récupérer les deux adresses","primary")+'</div></section>'+
@@ -244,7 +279,7 @@ if(kind==="opportunity")previewOpportunity(obj);
 }
 function remove(kind,key){const arr=data[kind],item=arr.find(x=>x.id===key);if(!item)return;if(!confirm("Supprimer cette fiche ? Cette action n’est pas réversible sans sauvegarde."))return;data[kind]=arr.filter(x=>x.id!==key);save();render();toast("Fiche supprimée.")}
 function generateMessage(x){
-const body="Bonjour "+x.name+",\n\nJe suis R-niel, collaboratrice en promotion artistique avec MEYDEN — Mouvement artistique du Québec.\n\nJ’ai découvert ton univers musical"+(x.style?" ("+x.style+")":"")+" et j’aimerais faire connaissance et en apprendre davantage sur tes projets.\n\nMEYDEN accompagne les artistes et les DJ dans la structuration, leur visibilité et leur développement professionnel. Si cela t’intéresse, nous pourrions échanger pour voir si une collaboration est pertinente.\n\nAu plaisir,\nR-niel\nMEYDEN — Mouvement artistique du Québec";
+const body=window.RNIEL_I18N?.lang==="en"?"Hello "+x.name+",\n\nMy name is R-Niel. I collaborate with MEYDEN — Mouvement artistique du Québec in artist promotion.\n\nI discovered your music"+(x.style?" ("+x.style+")":"")+" and would love to learn more about your projects.\n\nMEYDEN supports artists and DJs with professional development, visibility and new opportunities. If you're interested, I'd be glad to connect.\n\nBest regards,\nR-Niel\nMEYDEN — Mouvement artistique du Québec":"Bonjour "+x.name+",\n\nJe suis R-niel, collaboratrice en promotion artistique avec MEYDEN — Mouvement artistique du Québec.\n\nJ’ai découvert ton univers musical"+(x.style?" ("+x.style+")":"")+" et j’aimerais faire connaissance et en apprendre davantage sur tes projets.\n\nMEYDEN accompagne les artistes et les DJ dans la structuration, leur visibilité et leur développement professionnel. Si cela t’intéresse, nous pourrions échanger pour voir si une collaboration est pertinente.\n\nAu plaisir,\nR-niel\nMEYDEN — Mouvement artistique du Québec";
 $("dialog-content").innerHTML='<div class="modal-head"><h2>Message de premier contact</h2><button class="close" data-action="close">×</button></div><div class="modal-body"><p class="sub">Modifie le message selon la relation réelle avec l’artiste. Aucun envoi automatique.</p><textarea id="message-content" rows="14" style="min-height:280px">'+safe(body)+'</textarea><div class="modal-foot">'+btn("close","Fermer")+btn("copy-message","Copier le message","primary")+'</div></div>';$("dialog").showModal()
 }
 async function copyMessage(){const box=$("message-content");if(!box)return;try{await navigator.clipboard.writeText(box.value);toast("Message copié.")}catch{box.select();document.execCommand("copy");toast("Texte sélectionné / copié.")}}
