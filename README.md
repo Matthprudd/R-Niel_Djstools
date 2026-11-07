@@ -39,7 +39,9 @@ Variables à créer dans **Vercel → Project → Settings → Environment Varia
 - \`RNIEL_TO_EMAIL\` : adresse de R-niel.
 - \`RNIEL_ACCESS_CODE\` : phrase secrète aléatoire et longue (idéalement 32+ caractères), partagée séparément à R-niel.
 
-Ensuite redéployer pour que la fonction dispose des variables. Dans l'application, ouvrir Réglages et saisir le code d'accès à l'envoi. Le code est gardé dans **sessionStorage** (un seul onglet, il disparaît à la fermeture de session) et envoyé uniquement au serveur lors d'une soumission.
+Ensuite redéployer pour que la fonction dispose des variables. Dans l'application, ouvrir **Réglages** et saisir le code d'accès d'envoi fourni séparément par l'administrateur MEYDEN. Le code est vérifié auprès du serveur via **/api/recipients**; une fois validé, les deux adresses de destination sont automatiquement renseignées dans les réglages locaux. Le code est gardé dans **sessionStorage** (un seul onglet, il disparaît à la fermeture de session). Il n'est jamais enregistré dans GitHub ni dans une sauvegarde JSON.
+
+Le module interroge **/api/status** pour afficher si le service d'envoi est prêt. Si les variables d'expédition ne sont pas complètes, le bouton d'envoi automatique reste désactivé.
 
 Sur une proposition enregistrée : cliquer **Envoyer automatiquement**. Le serveur effectue deux envois distincts : proposition à MEYDEN et confirmation à R-niel. Le statut passe à *Envoyée par courriel* uniquement si les deux envois réussissent.
 
@@ -47,7 +49,7 @@ Sur une proposition enregistrée : cliquer **Envoyer automatiquement**. Le serve
 
 ### Solution sans Resend
 
-Dans Réglages, enregistrer les deux adresses pour le mode manuel. Sur une proposition, cliquer **Courriel manuel** : l'application de messagerie s'ouvre avec Mathieu comme destinataire et R-niel en copie. L'utilisateur vérifie et appuie lui-même sur Envoyer. **Aucun message n'est envoyé automatiquement par ce mode.**
+Dans Réglages, enregistrer les deux adresses pour le mode manuel, ou saisir le code d'accès de l'administrateur pour les récupérer automatiquement. Sur une proposition, cliquer **Courriel manuel** : l'application de messagerie s'ouvre avec Mathieu comme destinataire et R-niel en copie. L'utilisateur vérifie et appuie lui-même sur Envoyer. **Aucun message n'est envoyé automatiquement par ce mode.**
 
 ## Données et confidentialité
 
