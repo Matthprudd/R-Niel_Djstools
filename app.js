@@ -1,7 +1,6 @@
 "use strict";
 (function(){
 const STORAGE="rniel-promohub-v1";
-const SESSION_CODE="rniel-send-code-session";
 const STATUS=["Découvert","Contacté","Intéressé","Orientation MEYDEN","En collaboration","Sans suite"];
 const CAMPAIGN_STATUS=["Idée","Planifiée","En cours","Terminée"];
 const TYPES=["DJ / Artiste","Salle de spectacle","Partenariat","Commandite","Événement","Émission / Live","Autre"];
@@ -182,7 +181,18 @@ return '<div class="notice">R-niel peut expliquer les niveaux et orienter les de
 function renderReports(){
 const total=data.talents.length,interested=data.talents.filter(x=>["Intéressé","Orientation MEYDEN","En collaboration"].includes(x.status)).length,completed=data.tasks.filter(x=>x.done).length,finished=data.campaigns.filter(x=>x.status==="Terminée").length,sent=data.opportunities.filter(x=>x.sentAt).length;
 return '<div class="stats">'+metric(total,"Talents enregistrés")+metric(interested,"Talents intéressés")+metric(completed,"Suivis terminés")+metric(finished,"Campagnes terminées")+'</div><div class="grid2"><section class="panel"><h2>Activités enregistrées</h2><p>Campagnes au total : <b>'+data.campaigns.length+'</b></p><p>Suivis en attente : <b>'+(data.tasks.length-completed)+'</b></p><p>Opportunités consignées : <b>'+data.opportunities.length+'</b></p><p>Opportunités envoyées via le service : <b>'+sent+'</b></p><div class="divider"></div><div class="inline-actions">'+btn("print","Imprimer / PDF","primary")+btn("export","Exporter les données")+'</div></section><section class="panel"><h2>Valorisation du travail</h2><p>Ces indicateurs mesurent les démarches consignées. Une proposition transmise ne correspond pas nécessairement à une collaboration acceptée et la visibilité n’équivaut pas automatiquement à un public en salle.</p><p>Ajoute une date, les échanges et le résultat observé dans chaque fiche pour produire des bilans crédibles.</p><div class="notice">Bilans fondés uniquement sur les données enregistrées dans ce navigateur. Ils ne représentent pas des statistiques vérifiées d’autres plateformes.</div></section></div>'}
-function renderSettings(){let s=data.settings||{};return '<div class="notice orange" id="email-status" style="margin-bottom:16px">Vérification du service de courriel...</div><div class="grid2"><section class="panel"><h2>Préparation des courriels</h2><p>Les adresses suivantes servent à préremplir les brouillons ouverts dans ta messagerie. Elles sont sauvegardées uniquement dans ce navigateur.</p><form data-form="settings" class="stack"><div class="field"><label for="meyden-email">Courriel de Mathieu / MEYDEN</label><input id="meyden-email" name="meydenEmail" type="email" class="input" value="'+safe(s.meydenEmail||"")+'" placeholder="adresse@exemple.com"></div><div class="field"><label for="rniel-email">Courriel de R-niel</label><input id="rniel-email" name="rnielEmail" type="email" class="input" value="'+safe(s.rnielEmail||"")+'" placeholder="adresse@exemple.com"></div><button class="btn primary" type="submit">Enregistrer les adresses</button></form></section><section class="panel"><h2>Envoi automatique sécurisé</h2><p>Le serveur Vercel doit avoir les variables RESEND_API_KEY, RESEND_FROM_EMAIL, MEYDEN_TO_EMAIL, RNIEL_TO_EMAIL et RNIEL_ACCESS_CODE.</p><div class="field"><label for="send-code">Code d’accès d’envoi (fourni par l’administrateur)</label><input type="password" class="input" id="send-code" autocomplete="off" placeholder="Coller le code d’accès ici"></div><p class="tiny">Le code reste dans la session de cet onglet et n’est jamais ajouté au dépôt GitHub.</p>'+btn("save-code","Activer l’envoi pour cet onglet","primary")+'</section><section class="panel"><h2>Sauvegarde et récupération</h2><p>Les données locales peuvent être exportées et réimportées sur un autre appareil. Conserve tes sauvegardes dans un emplacement privé.</p><div class="inline-actions">'+btn("export","Exporter JSON","primary")+btn("import-click","Importer JSON")+btn("reset","Effacer mes données locales","warn")+'</div><input type="file" id="import-file" accept=".json,application/json" hidden></section><section class="panel"><h2>Liens utiles</h2><p>Portail MEYDEN et environnement artistique professionnel.</p><div class="quick-links"><a class="btn" target="_blank" rel="noopener noreferrer" href="https://meydenx-hedliner.vercel.app/">MEYDEN × Hedliner ↗</a><a class="btn" target="_blank" rel="noopener noreferrer" href="https://hedliner.com/">Hedliner ↗</a><a class="btn" target="_blank" rel="noopener noreferrer" href="https://github.com/Matthprudd/R-Niel_Djstools">Dépôt GitHub ↗</a></div><p class="tiny">Version 1.0 : outil autonome sur navigateur. Synchronisation multi-appareils et authentification complète à développer avant utilisation d’équipe.</p></section></div>'}
+function renderSettings(){
+ const s=data.settings||{};
+ return '<div class="notice" style="margin-bottom:16px">Le courriel est composé à partir de toutes les informations liées à l’artiste pendant son parcours. Les deux adresses sont préparées en même temps : R-niel vérifie et envoie depuis sa messagerie.</div>'+
+ '<div class="grid2"><section class="panel"><h2>Destinataires des rapports</h2><p>À configurer une seule fois sur cet appareil. Ces adresses sont intégrées aux brouillons créés par le programme.</p>'+
+ '<form data-form="settings" class="stack"><div class="field"><label for="meyden-email">Mathieu Prud’homme — MEYDEN</label><input id="meyden-email" name="meydenEmail" type="email" class="input" value="'+safe(s.meydenEmail||"")+'" placeholder="adresse@gmail.com" required></div>'+
+ '<div class="field"><label for="rniel-email">R-niel Yousoft</label><input id="rniel-email" name="rnielEmail" type="email" class="input" value="'+safe(s.rnielEmail||"")+'" placeholder="adresse@gmail.com" required></div>'+
+ '<button class="btn primary" type="submit">Enregistrer les adresses</button></form></section>'+
+ '<section class="panel"><h2>Récupérer les adresses déjà configurées</h2><p>Si tu disposes du code MEYDEN, récupère les deux adresses depuis la configuration protégée du serveur Vercel. Ce code n’active aucun envoi automatique.</p>'+
+ '<div class="field"><label for="send-code">Code privé MEYDEN</label><input type="password" id="send-code" class="input" autocomplete="off" placeholder="Code d’accès MEYDEN"></div><div style="margin-top:13px">'+btn("save-code","Récupérer les deux adresses","primary")+'</div></section>'+
+ '<section class="panel"><h2>Sauvegarder le parcours</h2><p>Les talents, l’historique, les campagnes, les tâches et les opportunités restent dans ce navigateur. Enregistre des sauvegardes privées pour éviter toute perte.</p><div class="inline-actions">'+btn("export","Exporter JSON","primary")+btn("import-click","Importer JSON")+btn("reset","Effacer les données locales","warn")+'</div><input type="file" id="import-file" accept=".json,application/json" hidden></section>'+
+ '<section class="panel"><h2>Liens utiles</h2><div class="quick-links"><a class="btn" href="https://meydenx-hedliner.vercel.app/" target="_blank" rel="noopener noreferrer">MEYDEN × Hedliner ↗</a><a class="btn" href="https://hedliner.com/" target="_blank" rel="noopener noreferrer">Hedliner ↗</a><a class="btn" href="https://github.com/Matthprudd/R-Niel_Djstools" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></section></div>';
+}
 function field(name,label,value="",type="text",opts={}){
 return '<div class="field '+(opts.wide?"wide":"")+'"><label for="f-'+name+'">'+label+'</label>'+(type==="textarea"?'<textarea id="f-'+name+'" name="'+name+'" '+(opts.required?"required":"")+' maxlength="'+(opts.max||3000)+'" placeholder="'+safe(opts.placeholder||"")+'">'+safe(value)+'</textarea>':type==="select"?'<select id="f-'+name+'" name="'+name+'">'+(opts.options||[]).map(o=>'<option value="'+safe(o)+'" '+(o===value?"selected":"")+'>'+safe(o)+'</option>').join("")+'</select>':'<input class="input" type="'+type+'" id="f-'+name+'" name="'+name+'" value="'+safe(value)+'" '+(opts.required?"required":"")+' maxlength="'+(opts.max||200)+'" placeholder="'+safe(opts.placeholder||"")+'">')+'</div>'}
 function modal(form,title,fields,obj){const val=obj||{},body='<div class="modal-head"><h2>'+title+'</h2><button class="close" type="button" data-action="close" aria-label="Fermer">×</button></div><form data-form="'+form+'" class="modal-body"><input type="hidden" name="id" value="'+safe(val.id||"")+'"><div class="form-grid">'+fields.join("")+'</div><div class="modal-foot">'+btn("close","Annuler")+'<button class="btn primary" type="submit">'+(form==="opportunity"?"Enregistrer et préparer le courriel":"Enregistrer")+'</button></div></form>';$("dialog-content").innerHTML=body;$("dialog").showModal()}
@@ -228,23 +238,6 @@ save();$("dialog").close();render();toast("Enregistré avec succès.");
 if(kind==="opportunity")previewOpportunity(obj);
 }
 function remove(kind,key){const arr=data[kind],item=arr.find(x=>x.id===key);if(!item)return;if(!confirm("Supprimer cette fiche ? Cette action n’est pas réversible sans sauvegarde."))return;data[kind]=arr.filter(x=>x.id!==key);save();render();toast("Fiche supprimée.")}
-function doEmailDraft(o){const {meydenEmail,rnielEmail}=data.settings||{};if(!meydenEmail||!rnielEmail){toast("Renseigne d’abord les deux adresses dans Réglages.");setPage("settings");return}
-const subject="MEYDEN — Proposition "+o.ref+" — "+o.title;
-window.location.href="mailto:"+encodeURIComponent(meydenEmail)+"?cc="+encodeURIComponent(rnielEmail)+"&subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(opportunityText(o));
-toast("Courriel préparé. Vérifie et confirme l’envoi dans ta messagerie.")}
-async function sendOpportunity(o){
-if(o.sentAt&&!confirm("Cette proposition a déjà été envoyée. Envoyer une nouvelle copie ?"))return;
-let code=sessionStorage.getItem(SESSION_CODE)||"";
-if(!code){toast("Configure ton code d’envoi dans Réglages.");setPage("settings");return}
-const go=document.querySelector('[data-action="send-opportunity"][data-id="'+o.id+'"]');
-if(go){go.disabled=true;go.textContent="Envoi..."}
-try{
-const res=await fetch("/api/opportunity",{method:"POST",headers:{"Content-Type":"application/json","X-Rniel-Access-Code":code},body:JSON.stringify({id:o.id,ref:o.ref,title:o.title,type:o.type,person:o.person,contact:o.contact,description:o.description,nextStep:o.nextStep,createdAt:o.createdAt})});
-const result=await res.json().catch(()=>({error:"Réponse du serveur illisible"}));
-if(!res.ok||!result.ok)throw new Error(result.error||"Envoi non confirmé");
-o.sentAt=now();o.status="Envoyée par courriel";save();render();toast("Deux courriels transmis : MEYDEN et R-niel.");
-}catch(err){render();toast("Envoi non confirmé : "+String(err.message).slice(0,160))}
-}
 function generateMessage(x){
 const body="Bonjour "+x.name+",\n\nJe suis R-niel, collaboratrice en promotion artistique avec MEYDEN — Mouvement artistique du Québec.\n\nJ’ai découvert ton univers musical"+(x.style?" ("+x.style+")":"")+" et j’aimerais faire connaissance et en apprendre davantage sur tes projets.\n\nMEYDEN accompagne les artistes et les DJ dans la structuration, leur visibilité et leur développement professionnel. Si cela t’intéresse, nous pourrions échanger pour voir si une collaboration est pertinente.\n\nAu plaisir,\nR-niel\nMEYDEN — Mouvement artistique du Québec";
 $("dialog-content").innerHTML='<div class="modal-head"><h2>Message de premier contact</h2><button class="close" data-action="close">×</button></div><div class="modal-body"><p class="sub">Modifie le message selon la relation réelle avec l’artiste. Aucun envoi automatique.</p><textarea id="message-content" rows="14" style="min-height:280px">'+safe(body)+'</textarea><div class="modal-foot">'+btn("close","Fermer")+btn("copy-message","Copier le message","primary")+'</div></div>';$("dialog").showModal()
@@ -262,6 +255,10 @@ const action=b.dataset.action,key=b.dataset.id;
 const get=k=>data[k].find(x=>x.id===key);
 if(action==="new-talent")newTalent();
 else if(action==="edit-talent")newTalent(get("talents"));
+else if(action==="show-history"){const x=get("talents");if(x)showHistory(x)}
+else if(action==="add-activity"){const x=get("talents");if(x)newActivity(x.id)}
+else if(action==="delete-activity"){const x=get("activities");if(x&&confirm("Supprimer cette information du parcours ?")){data.activities=data.activities.filter(a=>a.id!==key);save();const t=data.talents.find(t=>t.id===x.talentId);if(t)showHistory(t);else $("dialog").close();render()}}
+else if(action==="propose-talent"){const x=get("talents");if(x)newOpportunity({talentId:x.id,person:x.name,contact:x.link||"",title:"Occasion de développement — "+x.name,description:x.notes||"Artiste découvert à présenter à MEYDEN."})}
 else if(action==="delete-talent")remove("talents",key);
 else if(action==="new-campaign")newCampaign();
 else if(action==="edit-campaign")newCampaign(get("campaigns"));
@@ -273,8 +270,11 @@ else if(action==="toggle-task"){const x=get("tasks");if(x){x.done=!x.done;save()
 else if(action==="new-opportunity")newOpportunity();
 else if(action==="edit-opportunity")newOpportunity(get("opportunities"));
 else if(action==="delete-opportunity")remove("opportunities",key);
-else if(action==="email-draft"){const x=get("opportunities");if(x)doEmailDraft(x)}
-else if(action==="send-opportunity"){const x=get("opportunities");if(x)await sendOpportunity(x)}
+else if(action==="email-draft"){const x=get("opportunities");if(x)previewOpportunity(x)}
+else if(action==="open-draft"){const x=get("opportunities");if(x)openDraft(x)}
+else if(action==="copy-draft")await copyDraft();
+else if(action==="draft-settings"){$("dialog").close();setPage("settings");}
+else if(action==="confirm-draft"){const x=get("opportunities");if(x&&confirm("Confirmer avoir envoyé le courriel aux deux destinataires depuis ta messagerie ?")){x.confirmedSentAt=now();x.status="Envoi confirmé par R-niel";save();render();toast("Envoi personnel confirmé dans le suivi.");}}
 else if(action==="message-talent"){const x=get("talents");if(x)generateMessage(x)}
 else if(action==="copy-message")copyMessage();
 else if(action==="go-incubation")setPage("incubation");
@@ -285,7 +285,7 @@ else if(action==="export")backup();
 else if(action==="import-click")$("import-file")?.click();
 else if(action==="print")window.print();
 else if(action==="reset")clearData();
-else if(action==="save-code"){const v=$("send-code")?.value?.trim();if(!v||v.length<20){toast("Entre le code d’accès sécurisé fourni par MEYDEN.");return}try{const res=await fetch("/api/recipients",{method:"POST",headers:{"X-Rniel-Access-Code":v}});const d=await res.json();if(!res.ok||!d.ok)throw new Error(d.error||"Code refusé");sessionStorage.setItem(SESSION_CODE,v);data.settings={...data.settings,meydenEmail:d.meydenEmail,rnielEmail:d.rnielEmail};save();render();toast("Accès vérifié. Les deux adresses de courriel sont configurées.");}catch(err){toast("Code non accepté : "+String(err.message).slice(0,120))}}
+else if(action==="save-code"){const v=$("send-code")?.value?.trim();if(!v||v.length<20){toast("Entre le code d’accès sécurisé fourni par MEYDEN.");return}try{const res=await fetch("/api/recipients",{method:"POST",headers:{"X-Rniel-Access-Code":v}});const d=await res.json();if(!res.ok||!d.ok)throw new Error(d.error||"Code refusé");data.settings={...data.settings,meydenEmail:d.meydenEmail,rnielEmail:d.rnielEmail};save();render();toast("Adresses récupérées. Les courriels peuvent maintenant être préparés.");}catch(err){toast("Code non accepté : "+String(err.message).slice(0,120))}}
 });
 document.addEventListener("submit",e=>{if(e.target.matches("form[data-form]")){e.preventDefault();saveForm(e.target)}});
 document.addEventListener("input",e=>{if(e.target.id==="talent-search"){filterTalents=e.target.value;filterItems("talent")}else if(e.target.id==="campaign-search"){filterCampaigns=e.target.value;filterItems("campaign")}});
