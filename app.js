@@ -140,13 +140,14 @@ function draftHref(to,subject,body){
 }
 function previewOpportunity(o){
  const to=draftRecipients(),subject=opportunitySubject(o),body=opportunityText(o);
+ if($("dialog").open)$("dialog").close();
  $("dialog-content").innerHTML='<div class="modal-head"><h2>Courriel construit à partir du parcours</h2><button class="close" type="button" data-action="close" aria-label="Fermer">×</button></div>'+
  '<div class="modal-body"><p class="sub">Le texte rassemble automatiquement la proposition et les informations associées au même artiste : profil, notes, historique des échanges, promotions et suivis. Tu peux le modifier avant l’envoi.</p>'+
  '<div class="field"><label>Destinataires (À)</label><div class="notice">'+(to.length===2?safe(to.join(" • ")):"Les deux adresses doivent être configurées dans Réglages.")+'</div></div>'+
  '<div class="field" style="margin-top:12px"><label for="draft-subject">Objet du courriel</label><input class="input" id="draft-subject" maxlength="220" value="'+safe(subject)+'"></div>'+
  '<div class="field" style="margin-top:12px"><label for="draft-body">Rapport complet — modifiable</label><textarea id="draft-body" rows="20" style="min-height:310px">'+safe(body)+'</textarea></div>'+
  '<div class="notice orange" style="margin-top:12px">Le bouton prépare seulement le brouillon. R-niel doit vérifier et appuyer sur Envoyer dans sa propre messagerie.</div>'+
- '<div class="modal-foot" style="flex-wrap:wrap;justify-content:flex-start">'+btn("close","Fermer","sm")+btn("copy-draft","Copier le courriel","sm")+(to.length===2?btn("open-draft","Ouvrir le courriel à deux","primary",'data-id="'+safe(o.id)+'"'):btn("draft-settings","Configurer les adresses","primary"))+'</div></div>';
+ '<div class="modal-foot" style="flex-wrap:wrap;justify-content:flex-start">'+btn("close","Fermer","sm")+btn("copy-draft","Copier le courriel","sm")+btn("save-draft","Télécharger TXT","sm",'data-id="'+safe(o.id)+'"')+(to.length===2?btn("open-draft","Ouvrir le courriel à deux","primary",'data-id="'+safe(o.id)+'"'):btn("draft-settings","Configurer les adresses","primary"))+'</div></div>';
  $("dialog").showModal();
 }
 function openDraft(o){
@@ -277,6 +278,7 @@ else if(action==="delete-opportunity")remove("opportunities",key);
 else if(action==="email-draft"){const x=get("opportunities");if(x)previewOpportunity(x)}
 else if(action==="open-draft"){const x=get("opportunities");if(x)openDraft(x)}
 else if(action==="copy-draft")await copyDraft();
+else if(action==="save-draft"){const x=get("opportunities");if(x){const subject=$("draft-subject")?.value||opportunitySubject(x),body=$("draft-body")?.value||opportunityText(x);download("R-Niel_Dossier_"+(x.ref||"MEYDEN").replace(/[^a-zA-Z0-9_-]/g,"_")+".txt","À : "+draftRecipients().join(", ")+"\nObjet : "+subject+"\n\n"+body,"text/plain;charset=utf-8");toast("Dossier complet sauvegardé en TXT.");}}
 else if(action==="draft-settings"){$("dialog").close();setPage("settings");}
 else if(action==="confirm-draft"){const x=get("opportunities");if(x&&confirm("Confirmer avoir envoyé le courriel aux deux destinataires depuis ta messagerie ?")){x.confirmedSentAt=now();x.status="Envoi confirmé par R-niel";save();render();toast("Envoi personnel confirmé dans le suivi.");}}
 else if(action==="message-talent"){const x=get("talents");if(x)generateMessage(x)}
