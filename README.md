@@ -24,7 +24,7 @@ Ce contenu est régénéré à chaque ouverture du brouillon, afin de refléter 
 6. Cliquer **Ouvrir le courriel à deux** : la messagerie de l'appareil s'ouvre avec les deux adresses dans le champ À, le sujet et le corps préremplis.
 7. **L'envoi réel appartient à R-niel : elle doit appuyer sur Envoyer dans Gmail ou son client courriel.** Elle peut ensuite marquer le dossier comme envoyé dans le tableau de bord.
 
-Le bouton « Copier le courriel » offre une solution de rechange si le téléphone ne prend pas en charge un brouillon mailto volumineux.
+Les boutons « Copier le courriel » et « Télécharger TXT » offrent deux solutions de rechange si le téléphone ne prend pas en charge un brouillon mailto volumineux.
 
 ### Les destinataires
 
