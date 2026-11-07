@@ -184,7 +184,7 @@ else if(action==="export")backup();
 else if(action==="import-click")$("import-file")?.click();
 else if(action==="print")window.print();
 else if(action==="reset")clearData();
-else if(action==="save-code"){const v=$("send-code")?.value?.trim();if(!v||v.length<16){toast("Entre le code sécurisé fourni par l’administrateur (16 caractères minimum).");return}sessionStorage.setItem(SESSION_CODE,v);$("send-code").value="";toast("Code conservé uniquement pour cet onglet.")}
+else if(action==="save-code"){const v=$("send-code")?.value?.trim();if(!v||v.length<20){toast("Entre le code d’accès sécurisé fourni par MEYDEN.");return}try{const res=await fetch("/api/recipients",{method:"POST",headers:{"X-Rniel-Access-Code":v}});const d=await res.json();if(!res.ok||!d.ok)throw new Error(d.error||"Code refusé");sessionStorage.setItem(SESSION_CODE,v);data.settings={...data.settings,meydenEmail:d.meydenEmail,rnielEmail:d.rnielEmail};save();render();toast("Accès vérifié. Les deux adresses de courriel sont configurées.");}catch(err){toast("Code non accepté : "+String(err.message).slice(0,120))}}
 });
 document.addEventListener("submit",e=>{if(e.target.matches("form[data-form]")){e.preventDefault();saveForm(e.target)}});
 document.addEventListener("input",e=>{if(e.target.id==="talent-search"){filterTalents=e.target.value;filterItems("talent")}else if(e.target.id==="campaign-search"){filterCampaigns=e.target.value;filterItems("campaign")}});
