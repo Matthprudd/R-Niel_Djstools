@@ -1,69 +1,67 @@
 # R-NIEL YOURSELF — PROMO HUB × MEYDEN
 
-Application HTML mobile-first pour R-niel Yousoft et la promotion artistique MEYDEN — Mouvement artistique du Québec.
+Bureau numérique de promotion et de développement artistique de R-niel Yousoft. Application HTML/JavaScript, mobile-first, déployable sur Vercel.
 
-**Statut :** V1 de travail. Le tableau de bord fonctionne dans un navigateur sans serveur. Le service d'envoi automatique à deux destinataires exige une configuration Vercel + Resend avant de pouvoir transmettre quoi que ce soit.
+## Principe directeur : chaque information recueillie construit le courriel
 
-## Modules opérationnels
+Le courriel final n'est pas limité au formulaire « Proposer une opportunité ». Il est composé dynamiquement à partir **du parcours complet du DJ lié à cette proposition** :
 
-1. **Accueil** : compteurs fondés sur les données réelles saisies et actions rapides.
-2. **DJ / Talents** : créer, modifier, supprimer et rechercher des fiches (nom artistique, style, région, profil, notes, statut). Générateur de premier message personnalisé, à relire et copier.
-3. **Promotion** : campagnes avec support, date, notes et statut (idée, planifiée, en cours, terminée).
-4. **Suivis** : tâches et relances datées, marqueur terminé/à faire.
-5. **Opportunités** : proposer un artiste, une salle, une commandite, un événement ou une collaboration; suivre un dossier avec numéro de référence. Préparation de courriel manuel ou envoi serveur sécurisé.
-6. **Incubation DJ** : présentation des 3 niveaux officiels, 100 $ / 250 $ / 250 $ + % selon entente.
-7. **Bilans** : statistiques locales observées, impression et enregistrement au format PDF via le navigateur.
-8. **Réglages** : adresses pour les brouillons de courriel, clé d'envoi de session, sauvegarde JSON, restauration et effacement local.
+1. Informations de la fiche DJ (nom, style, ville, plateformes, liens, statut et observations).
+2. Historique daté des découvertes, conversations, réponses, décisions et autres événements.
+3. Campagnes promotionnelles associées au même DJ (objectifs, plateformes, états, dates et notes).
+4. Tâches et suivis associés (à faire/terminés, échéances, notes).
+5. Description de l'opportunité et action recommandée à MEYDEN.
 
-Aucun logo officiel MEYDEN inventé n'est utilisé : l'interface présente une marque typographique neutre.
+Ce contenu est régénéré à chaque ouverture du brouillon, afin de refléter les mises à jour enregistrées. **Il rassemble seulement les données associées au même dossier artistique**, pas celles des autres DJ.
 
-## Démarrage
+### Parcours de R-niel
 
-Ouvrir index.html sur un navigateur récent. Aucune dépendance de construction n'est requise.
+1. Dans **DJ / Talents**, créer la fiche du DJ. L'application conserve la découverte et les changements majeurs de statut/notes dans l'historique.
+2. Cliquer sur **Parcours** dans la fiche pour ajouter une conversation, un appel, une réponse, une décision ou une information reçue. Chaque entrée conserve sa date et son contexte.
+3. Dans **Promotion** et **Suivis**, relier la campagne ou la tâche au DJ grâce au champ « DJ lié au dossier ». Les anciens suivis qui portent exactement le nom du DJ peuvent également être associés au dossier.
+4. Cliquer sur **Proposer à MEYDEN** depuis la fiche DJ, ou utiliser **Opportunités → Nouvelle proposition** et sélectionner le DJ concerné.
+5. Après **Enregistrer et préparer le courriel**, le système affiche le rapport complet, son objet, et les deux destinataires. R-niel peut relire et modifier le contenu.
+6. Cliquer **Ouvrir le courriel à deux** : la messagerie de l'appareil s'ouvre avec les deux adresses dans le champ À, le sujet et le corps préremplis.
+7. **L'envoi réel appartient à R-niel : elle doit appuyer sur Envoyer dans Gmail ou son client courriel.** Elle peut ensuite marquer le dossier comme envoyé dans le tableau de bord.
 
-Pour déployer :
-1. Dans Vercel, importer le dépôt GitHub \`Matthprudd/R-Niel_Djstools\`.
-2. Framework : \`Other\`; répertoire racine : \`./\`.
-3. Déployer. Vercel sert index.html, app.js et la fonction serveur \`/api/opportunity\`.
-4. Ajouter le site à l'écran d'accueil Android ou iPhone si souhaité (un raccourci web, pas encore une vraie PWA hors ligne).
+Le bouton « Copier le courriel » offre une solution de rechange si le téléphone ne prend pas en charge un brouillon mailto volumineux.
 
-## Envoi automatique de deux courriels
+### Les destinataires
 
-La fonction \`api/opportunity.js\` appelle Resend uniquement après validation du code de session. L'envoi de courriel passe par des variables d'environnement **sur Vercel uniquement**. Ne jamais insérer de clé Resend ou de code secret dans le HTML, JavaScript client ou GitHub.
+- Mathieu Prud'homme — MEYDEN.
+- R-niel Yousoft — copie du même rapport.
 
-Variables à créer dans **Vercel → Project → Settings → Environment Variables** :
+Leurs adresses ne sont pas écrites dans les sources publiques du dépôt. Elles sont configurables dans **Réglages**, enregistrées localement sur l'appareil de R-niel, ou récupérées via un code d'accès à usage privé et un point de terminaison protégé par Vercel (\`/api/recipients\`).
 
-- \`RESEND_API_KEY\` : clé privée Resend.
-- \`RESEND_FROM_EMAIL\` : adresse expéditrice d'un domaine vérifié chez Resend.
-- \`MEYDEN_TO_EMAIL\` : adresse de Mathieu Prud'homme.
-- \`RNIEL_TO_EMAIL\` : adresse de R-niel.
-- \`RNIEL_ACCESS_CODE\` : phrase secrète aléatoire et longue (idéalement 32+ caractères), partagée séparément à R-niel.
+Un code d'accès est utile pour récupérer les deux adresses, **pas pour envoyer des messages**.
 
-Ensuite redéployer pour que la fonction dispose des variables. Dans l'application, ouvrir **Réglages** et saisir le code d'accès d'envoi fourni séparément par l'administrateur MEYDEN. Le code est vérifié auprès du serveur via **/api/recipients**; une fois validé, les deux adresses de destination sont automatiquement renseignées dans les réglages locaux. Le code est gardé dans **sessionStorage** (un seul onglet, il disparaît à la fermeture de session). Il n'est jamais enregistré dans GitHub ni dans une sauvegarde JSON.
+## Modules disponibles
 
-Le module interroge **/api/status** pour afficher si le service d'envoi est prêt. Si les variables d'expédition ne sont pas complètes, le bouton d'envoi automatique reste désactivé.
+- Accueil et tableau de bord.
+- DJ / Talents et historique des interactions.
+- Campagnes promotionnelles.
+- Suivis et relances.
+- Opportunités, synthèse cumulative et brouillon courriel.
+- Présentation du programme officiel d'incubation DJ MEYDEN (3 niveaux).
+- Bilans des démarches, impression en PDF depuis le navigateur.
+- Import/export des données au format JSON.
 
-Sur une proposition enregistrée : cliquer **Envoyer automatiquement**. Le serveur effectue deux envois distincts : proposition à MEYDEN et confirmation à R-niel. Le statut passe à *Envoyée par courriel* uniquement si les deux envois réussissent.
+## Confidentialité, limites et sécurité
 
-**Important :** si un seul message part et l'autre échoue, l'interface signale un *envoi partiel*. Vérifier les boîtes avant un nouvel essai pour éviter les doublons. Cette V1 protège l'envoi avec un code partagé, mais ne dispose pas encore d'un compte nominatif sécurisé, de limitation de débit durable ni d'un journal d'envoi centralisé. Pour une diffusion publique à grande échelle, ajouter l'authentification Supabase, des permissions par utilisateur et un contrôle anti-abus.
+- Les données sont enregistrées uniquement dans le \`localStorage\` de ce navigateur, sauf les adresses de destination qui existent aussi dans la configuration privée Vercel. Il n'y a pas encore de base centrale synchronisée.
+- La personne qui utilise le même appareil/profil de navigateur peut accéder aux données locales de l'application. Ne pas y conserver des renseignements sensibles, mots de passe ni documents confidentiels. Prévoir une authentification et une base sécurisée si l'outil devient multi-utilisateur.
+- Le dépôt GitHub étant public, ne jamais y mettre de clés, codes privés ou données personnelles de talents.
+- Une action enregistrée n'est pas une entente conclue; une proposition ne confirme pas de booking, de contrat ou de commande.
+- Les vidéos et publications sont planifiées ici; elles ne sont pas envoyées automatiquement à TikTok, Instagram ou Messenger.
+- Le point de terminaison \`/api/opportunity\` ne peut plus envoyer de courriel : il retourne HTTP 410 (fonctionnalité retirée volontairement).
+- Il n'est **pas nécessaire** de configurer Resend, une clé API de courrier ou un domaine d'expédition.
+- Si le brouillon contient de très longues notes, certains clients de messagerie peuvent limiter la longueur du lien \`mailto:\`. Utiliser alors « Copier le courriel » et coller dans un nouveau message.
 
-### Solution sans Resend
+## Déploiement
 
-Dans Réglages, enregistrer les deux adresses pour le mode manuel, ou saisir le code d'accès de l'administrateur pour les récupérer automatiquement. Sur une proposition, cliquer **Courriel manuel** : l'application de messagerie s'ouvre avec Mathieu comme destinataire et R-niel en copie. L'utilisateur vérifie et appuie lui-même sur Envoyer. **Aucun message n'est envoyé automatiquement par ce mode.**
+1. Importer le dépôt \`Matthprudd/R-Niel_Djstools\` dans Vercel.
+2. Utiliser le répertoire racine, sans framework spécifique; le fichier d'entrée est \`index.html\`.
+3. La production utilise le domaine \`https://r-nieldjstools.vercel.app/\`.
+4. Le code étant relié à GitHub, chaque commit sur \`main\` peut déclencher un nouveau déploiement.
 
-## Données et confidentialité
-
-- Données conservées dans \`localStorage\` du navigateur courant seulement.
-- Ne pas y conserver des renseignements financiers, mots de passe ou informations sensibles.
-- Exporter régulièrement une sauvegarde JSON dans un dossier privé.
-- Un autre appareil ne partage pas les fiches automatiquement. Pour une utilisation multi-appareils/équipe, brancher un stockage central sécurisé avec contrôle d'accès.
-- Le dépôt GitHub est public : ne jamais y écrire des identifiants, clés, courriels personnels réels ou fichiers confidentiels.
-- Les statistiques sont fondées sur les données saisies et ne démontrent pas directement des résultats commerciaux.
-
-## Périmètre
-
-L'application **ne publie pas** directement sur TikTok, Instagram ou Facebook. Elle n'envoie pas de messages sur ces réseaux. Aucun booking ni représentation n'est créé automatiquement via Hedliner. R-niel peut préparer les campagnes, contacter personnellement les artistes et transmettre des dossiers à MEYDEN.
-
-**Responsabilités :** MEYDEN valide les engagements professionnels, budgets, contrats et représentations; les rôles d'Antbro et de GRP International dépendent des ententes.
-
-**Auteur / coordination :** MEYDEN — Mouvement artistique du Québec — Structurer • Créer • Élever.
+MEYDEN — Mouvement artistique du Québec. Structurer • Créer • Élever.
