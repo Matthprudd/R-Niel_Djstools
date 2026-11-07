@@ -27,7 +27,6 @@ $("page-title").textContent=titles[page][0];$("page-sub").textContent=titles[pag
 document.querySelectorAll("[data-page]").forEach(n=>n.classList.toggle("active",n.dataset.page===page));
 const views={home:renderHome,talents:renderTalents,campaigns:renderCampaigns,tasks:renderTasks,opportunities:renderOpportunities,incubation:renderIncubation,reports:renderReports,settings:renderSettings};
 $("view").innerHTML=views[page]();
-if(page==="opportunities"||page==="settings")refreshEmailStatus();
 }
 function metric(num,label){return '<div class="stat"><div class="num">'+num+'</div><div class="label">'+label+'</div></div>'}
 function renderHome(){
@@ -49,30 +48,110 @@ function campaignItem(x){return '<article class="item campaign" data-search="'+s
 function renderCampaigns(){return '<div class="section-top"><h2>Campagnes promotionnelles</h2>'+btn("new-campaign","＋ Nouvelle campagne","primary")+'</div><div class="notice">Prépare les publications, les capsules et les annonces. Cette version organise les contenus, mais ne publie pas automatiquement sur TikTok, Instagram ou Messenger.</div><div class="toolbar" style="margin-top:15px"><input class="input" id="campaign-search" placeholder="Rechercher une campagne..." value="'+safe(filterCampaigns)+'" aria-label="Rechercher une campagne"></div><div class="items" id="campaign-list">'+(data.campaigns.length?data.campaigns.map(campaignItem).join(""):empty("◉","Aucune campagne","Prépare une annonce DJ, une capsule de 15 à 60 secondes ou la promotion d’un événement.","new-campaign","Créer une campagne"))+'</div>'}
 function taskItem(t,short){return '<article class="item"><div><h3>'+(t.done?"✓ ":"☐ ")+safe(t.title)+'</h3><p>'+safe(t.related||"Tâche générale")+' · '+(t.due?formatDate(t.due):"Date libre")+'</p>'+(t.notes?'<p>'+safe(t.notes)+'</p>':"")+'</div><div class="item-actions">'+btn("toggle-task",t.done?"Rouvrir":"Terminer","sm "+(t.done?"":"primary"),'data-id="'+safe(t.id)+'"')+(short?"":btn("edit-task","Modifier","sm",'data-id="'+safe(t.id)+'"')+btn("delete-task","Supprimer","sm warn",'data-id="'+safe(t.id)+'"'))+'</div></article>'}
 function renderTasks(){return '<div class="section-top"><h2>Suivis et rendez-vous</h2>'+btn("new-task","＋ Nouvelle tâche","primary")+'</div><div class="items">'+(data.tasks.length?[...data.tasks].sort((a,b)=>Number(a.done)-Number(b.done)||(a.due||"9999").localeCompare(b.due||"9999")).map(t=>taskItem(t,false)).join(""):empty("☑","Aucune tâche en mémoire","Crée un rappel pour une relance, un rendez-vous ou une publication.","new-task","Ajouter une tâche"))+'</div>'}
+function normalizeKey(v){return String(v||"").trim().toLocaleLowerCase("fr-CA")}
+function linkedTalent(o){
+  const direct=data.talents.find(t=>t.id===o.talentId);
+  return direct||data.talents.find(t=>normalizeKey(t.name)===normalizeKey(o.person))||null;
+}
+function associated(t,entry){
+  if(!t)return false;
+  if(entry.talentId)return entry.talentId===t.id;
+  return normalizeKey(entry.related)===normalizeKey(t.name)||normalizeKey(entry.artistName)===normalizeKey(t.name);
+}
+function opportunitySubject(o){return "MEYDEN | Dossier "+(o.ref||"")+" — "+(o.title||"Nouvelle opportunité")}
 function opportunityText(o){
-return ["PROPOSITION D’OPPORTUNITÉ — MEYDEN","Référence : "+o.ref,"Soumise par : R-niel Yousoft","Date : "+formatDate((o.createdAt||"").slice(0,10)),"","TYPE : "+(o.type||""),"TITRE : "+(o.title||""),"CONTACT / ARTISTE : "+(o.person||""),"COORDONNÉES : "+(o.contact||""),"","DESCRIPTION :",(o.description||""),"","PROCHAINE ÉTAPE PROPOSÉE :",(o.nextStep||""),"","MEYDEN — Mouvement artistique du Québec","Structurer • Créer • Élever"].join("\n");
+ const talent=linkedTalent(o), campaigns=talent?data.campaigns.filter(c=>associated(talent,c)):[], tasks=talent?data.tasks.filter(t=>associated(talent,t)):[],
+ activities=talent?(data.activities||[]).filter(a=>a.talentId===talent.id).sort((a,b)=>String(a.date||a.createdAt||"").localeCompare(String(b.date||b.createdAt||""))):[];
+ const lines=[
+ "Bonjour Mathieu,",
+ "",
+ "Voici une proposition de développement artistique préparée à partir des informations recueillies au cours de mon suivi.",
+ "Elle rassemble la proposition et les éléments déjà documentés dans mon bureau R-NIEL YOURSELF.",
+ "",
+ "DOSSIER D’OPPORTUNITÉ — MEYDEN",
+ "Référence : "+(o.ref||""),
+ "Date de création : "+formatDate((o.createdAt||"").slice(0,10)),
+ "Dernière mise à jour : "+formatDate((o.updatedAt||o.createdAt||"").slice(0,10)),
+ "Préparé par : R-niel Yousoft",
+ "",
+ "1. OPPORTUNITÉ IDENTIFIÉE",
+ "Catégorie : "+(o.type||"Non précisée"),
+ "Projet : "+(o.title||"Non précisé"),
+ "Artiste / organisation : "+(o.person||talent?.name||"Non précisé"),
+ "Lien ou coordonnées : "+(o.contact||talent?.link||"Non précisé"),
+ "Présentation : "+(o.description||"Non précisée"),
+ "Prochaine étape proposée : "+(o.nextStep||"À déterminer avec MEYDEN")
+ ];
+ if(talent){
+ lines.push("","2. FICHE ARTISTE ET POSITIONNEMENT",
+ "Nom artistique : "+(talent.name||""),
+ "Univers musical : "+(talent.style||"Non précisé"),
+ "Région : "+(talent.city||"Non précisée"),
+ "Plateforme de découverte : "+(talent.platform||"Non précisée"),
+ "Profil : "+(talent.link||"Non précisé"),
+ "Statut actuel : "+(talent.status||"Non précisé"),
+ "Observations accumulées : "+(talent.notes||"Aucune note"));
+ }
+ if(activities.length){
+ lines.push("","3. HISTORIQUE DES ÉCHANGES ET ACTIONS");
+ for(const a of activities)lines.push("• "+formatDate(a.date||String(a.createdAt||"").slice(0,10))+" — "+(a.type||"Suivi")+" : "+(a.detail||""));
+ }
+ if(campaigns.length){
+ lines.push("","4. PROMOTION ET CAMPAGNES LIÉES");
+ for(const c of campaigns)lines.push("• "+(c.title||"Campagne")+" | "+(c.platform||"Plateforme à préciser")+" | "+(c.status||"Statut à préciser")+" | "+formatDate(c.date)+"\n  "+(c.notes||""));
+ }
+ if(tasks.length){
+ lines.push("","5. SUIVIS ET ENGAGEMENTS");
+ for(const t of tasks)lines.push("• "+(t.done?"Terminé":"À faire")+" — "+(t.title||"Action")+" | "+formatDate(t.due)+"\n  "+(t.notes||""));
+ }
+ lines.push("","6. SYNTHÈSE ET DÉCISION DEMANDÉE",
+ "Je propose que MEYDEN évalue cette piste et détermine avec moi la suite des démarches.",
+ "Les étapes, partenariats, budgets ou engagements éventuels demeurent sujets à validation.",
+ "",
+ "Merci,",
+ "R-niel Yousoft",
+ "Promotion et développement artistique",
+ "MEYDEN — Mouvement artistique du Québec",
+ "Structurer • Créer • Élever");
+ return lines.join("\n");
+}
+function draftRecipients(){const c=data.settings||{};return [String(c.meydenEmail||"").trim(),String(c.rnielEmail||"").trim()].filter(Boolean)}
+function draftHref(to,subject,body){
+ return "mailto:"+to.map(encodeURIComponent).join(",")+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+}
+function previewOpportunity(o){
+ const to=draftRecipients(),subject=opportunitySubject(o),body=opportunityText(o);
+ $("dialog-content").innerHTML='<div class="modal-head"><h2>Courriel construit à partir du parcours</h2><button class="close" type="button" data-action="close" aria-label="Fermer">×</button></div>'+
+ '<div class="modal-body"><p class="sub">Le texte rassemble automatiquement la proposition et les informations associées au même artiste : profil, notes, historique des échanges, promotions et suivis. Tu peux le modifier avant l’envoi.</p>'+
+ '<div class="field"><label>Destinataires (À)</label><div class="notice">'+(to.length===2?safe(to.join(" • ")):"Les deux adresses doivent être configurées dans Réglages.")+'</div></div>'+
+ '<div class="field" style="margin-top:12px"><label for="draft-subject">Objet du courriel</label><input class="input" id="draft-subject" maxlength="220" value="'+safe(subject)+'"></div>'+
+ '<div class="field" style="margin-top:12px"><label for="draft-body">Rapport complet — modifiable</label><textarea id="draft-body" rows="20" style="min-height:310px">'+safe(body)+'</textarea></div>'+
+ '<div class="notice orange" style="margin-top:12px">Le bouton prépare seulement le brouillon. R-niel doit vérifier et appuyer sur Envoyer dans sa propre messagerie.</div>'+
+ '<div class="modal-foot" style="flex-wrap:wrap;justify-content:flex-start">'+btn("close","Fermer","sm")+btn("copy-draft","Copier le courriel","sm")+(to.length===2?btn("open-draft","Ouvrir le courriel à deux","primary",'data-id="'+safe(o.id)+'"'):btn("draft-settings","Configurer les adresses","primary"))+'</div></div>';
+ $("dialog").showModal();
+}
+function openDraft(o){
+ const to=draftRecipients();
+ if(to.length!==2){$("dialog").close();setPage("settings");toast("Il faut d’abord les deux adresses.");return}
+ const subject=$("draft-subject")?.value||opportunitySubject(o),body=$("draft-body")?.value||opportunityText(o);
+ o.preparedAt=now();o.status="Courriel préparé";save();
+ window.location.href=draftHref(to,subject,body);
+ toast("Brouillon ouvert pour les deux destinataires. À envoyer depuis ta messagerie.");
+}
+async function copyDraft(){
+ const txt="À : "+draftRecipients().join(", ")+"\nObjet : "+($("draft-subject")?.value||"")+"\n\n"+($("draft-body")?.value||"");
+ try{await navigator.clipboard.writeText(txt);toast("Courriel complet copié.");}
+ catch{const el=$("draft-body");if(el){el.select();document.execCommand("copy");toast("Texte sélectionné.");}}
 }
 function opportunityItem(o,short){
-let state=o.sentAt?"Envoyée par courriel":o.status||"Brouillon";
-return '<article class="item"><div><h3>✦ '+safe(o.title)+'</h3><div class="inline-actions">'+pill(state,o.sentAt?"green":"orange")+pill(o.type||"Autre")+pill(o.ref||"")+'</div><p>'+safe(o.person||"Contact à préciser")+' · '+formatDate((o.createdAt||"").slice(0,10))+'</p>'+(short?"":'<p>'+safe(o.description)+'</p>')+'</div><div class="item-actions">'+(short?btn("go-opportunities","Voir","sm"):btn("edit-opportunity","Modifier","sm",'data-id="'+safe(o.id)+'"')+btn("email-draft","Courriel manuel","sm",'data-id="'+safe(o.id)+'"')+btn("send-opportunity","Envoyer automatiquement","sm primary",'data-id="'+safe(o.id)+'"')+btn("delete-opportunity","Supprimer","sm warn",'data-id="'+safe(o.id)+'"'))+'</div></article>';
+ const state=o.confirmedSentAt?"Envoi confirmé":o.preparedAt?"Courriel préparé":"Brouillon";
+ return '<article class="item"><div><h3>✦ '+safe(o.title)+'</h3><div class="inline-actions">'+pill(state,o.confirmedSentAt?"green":"orange")+pill(o.type||"Autre")+pill(o.ref||"")+'</div><p>'+safe(o.person||linkedTalent(o)?.name||"Contact à préciser")+' · '+formatDate((o.createdAt||"").slice(0,10))+'</p>'+(short?"":'<p>'+safe(o.description)+'</p>')+'</div><div class="item-actions">'+(short?btn("go-opportunities","Voir","sm"):btn("edit-opportunity","Modifier","sm",'data-id="'+safe(o.id)+'"')+btn("email-draft","Voir le courriel complet","sm primary",'data-id="'+safe(o.id)+'"')+(o.confirmedSentAt?"":btn("confirm-draft","Marquer comme envoyé","sm",'data-id="'+safe(o.id)+'"'))+btn("delete-opportunity","Supprimer","sm warn",'data-id="'+safe(o.id)+'"'))+'</div></article>';
 }
-async function refreshEmailStatus(){
- const status=$("email-status");
- if(!status)return;
- status.textContent="Vérification du service de courriel...";
- try{
-   const r=await fetch("/api/status",{cache:"no-store"});
-   const d=await r.json();
-   if(!r.ok)throw new Error("indisponible");
-   if(!status.isConnected)return;
-   if(d.ready){status.textContent="Envoi automatique disponible. Un code d’accès est nécessaire pour soumettre les propositions.";status.className="notice";}
-   else{status.textContent="Envoi automatique non activé : utilise le bouton « Courriel manuel » après avoir enregistré les deux adresses dans Réglages.";status.className="notice orange";}
-   document.querySelectorAll('[data-action="send-opportunity"]').forEach(b=>{b.disabled=!d.ready;b.title=d.ready?"Envoi sécurisé":"Service automatique non configuré";});
- }catch{
-   if(status.isConnected){status.textContent="Statut du service indisponible. Utilise le courriel manuel.";status.className="notice orange";}
- }
+function renderOpportunities(){
+ return '<div class="section-top"><h2>Proposer une opportunité à MEYDEN</h2>'+btn("new-opportunity","✦ Nouvelle proposition","primary")+'</div>'+
+ '<div class="notice">Un courriel évolutif : chaque information recueillie sur un artiste lié au dossier (fiches, historique, promotion, tâches) s’ajoute à la synthèse lorsqu’on l’ouvre. R-niel vérifie ensuite et l’envoie elle-même aux deux adresses.</div>'+
+ '<div class="items" style="margin-top:16px">'+(data.opportunities.length?[...data.opportunities].reverse().map(o=>opportunityItem(o,false)).join(""):empty("✦","Aucune proposition enregistrée","Crée une piste de collaboration et associe-la à un talent pour intégrer le parcours complet.","new-opportunity","Créer une proposition"))+'</div>';
 }
-function renderOpportunities(){return '<div class="section-top"><h2>Proposer une opportunité à MEYDEN</h2>'+btn("new-opportunity","✦ Nouvelle proposition","primary")+'</div><div class="notice orange" id="email-status">Vérification du service de courriel...</div><div class="items" style="margin-top:16px">'+(data.opportunities.length?[...data.opportunities].reverse().map(o=>opportunityItem(o,false)).join(""):empty("✦","Aucune proposition enregistrée","Enregistre un artiste prometteur, une salle, un partenaire, un événement ou une nouvelle idée de collaboration.","new-opportunity","Proposer une opportunité"))+'</div>'}
 function renderIncubation(){
 const levels=[
 {title:"Niveau 1 — Structuration",price:"100 $ CA / mois",intro:"Construire une identité artistique claire et un dossier professionnel.",items:["Analyse musicale et positionnement","Direction artistique de base","Dossier DJ et liens de performance","Création ou optimisation Hedliner","Diagnostic des réseaux et lives","Plan d’action mensuel"]},
